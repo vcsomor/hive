@@ -69,7 +69,7 @@ import java.util.stream.LongStream;
 
 import static org.apache.hadoop.hive.metastore.metrics.AcidMetricService.replaceWhitespace;
 
-public class TestCompactionMetrics  extends CompactorTest {
+public class TestCompactionMetrics extends CompactorTest {
 
   private static final String INITIATED_METRICS_KEY = MetricsConstants.COMPACTION_STATUS_PREFIX + TxnStore.INITIATED_RESPONSE;
   private static final String INITIATOR_CYCLE_KEY = MetricsConstants.API_PREFIX + MetricsConstants.COMPACTION_INITIATOR_CYCLE;
@@ -178,7 +178,6 @@ public class TestCompactionMetrics  extends CompactorTest {
   }
 
   @Test
-  @org.junit.Ignore("HIVE-25716")
   public void testOldestReadyForCleaningAge() throws Exception {
     conf.setIntVar(HiveConf.ConfVars.COMPACTOR_MAX_NUM_DELTA, 1);
 
@@ -207,12 +206,23 @@ public class TestCompactionMetrics  extends CompactorTest {
     startWorker();
 
     runAcidMetricService();
-    long oldDiff = (System.currentTimeMillis() - oldStart)/1000;
-    long youngDiff = (System.currentTimeMillis() - youngStart)/1000;
+    long now = System.currentTimeMillis();
+    long oldDiff = (now - oldStart)/1000;
+    long youngDiff = (now - youngStart)/1000;
+
 
     long threshold = 1000;
-    Assert.assertTrue(Metrics.getOrCreateGauge(MetricsConstants.OLDEST_READY_FOR_CLEANING_AGE).intValue() <= oldDiff + threshold);
-    Assert.assertTrue(Metrics.getOrCreateGauge(MetricsConstants.OLDEST_READY_FOR_CLEANING_AGE).intValue() >= youngDiff);
+    int intValue = Metrics.getOrCreateGauge(MetricsConstants.OLDEST_READY_FOR_CLEANING_AGE).intValue();
+    System.err.println("Now: " + now);
+    System.err.println("Old start: " + oldStart);
+    System.err.println("Young start: " + youngStart);
+    System.err.println("Old diff: " + oldDiff);
+    System.err.println("Young diff: " + youngDiff);
+    System.err.println("Age: " + intValue);
+
+    boolean assertx = (intValue <= (oldDiff + threshold));
+    Assert.assertTrue(assertx);
+    Assert.assertTrue(intValue >= youngDiff);
   }
 
   @Test
